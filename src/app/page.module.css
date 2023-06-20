@@ -78,6 +78,8 @@
   align-items: center;
   position: relative;
   padding: 4rem 0;
+  flex-direction: column;
+  text-align: center;
 }
 
 .center::before {
@@ -93,15 +95,6 @@
   width: 240px;
   height: 180px;
   z-index: -1;
-}
-
-.center::before,
-.center::after {
-  content: '';
-  left: 50%;
-  position: absolute;
-  filter: blur(45px);
-  transform: translateZ(0);
 }
 
 .logo {
