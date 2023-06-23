@@ -1,14 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import styles from "./page.module.css";
-// for some reason, importing newBarretenbergApiSync doesnt work
-import { BarretenbergBinderSync } from "@aztec/bb.js/dest/barretenberg_binder";
-import { BarretenbergApiSync } from "@aztec/bb.js/dest/barretenberg_api";
-import * as bbjs from "@aztec/bb.js/dest/barretenberg_wasm";
 import { useEffect, useState } from "react";
-import { Buffer32, Fr } from "@aztec/bb.js/dest/types";
-import { BarretenbergApiAsync } from "@aztec/bb.js";
+import styles from "./page.module.css";
+
+// need to fix the imports
+import * as bbjs from "@aztec/bb.js/dest/browser/barretenberg_wasm";
+import { BarretenbergBinderSync } from "@aztec/bb.js/dest/browser/barretenberg_binder";
+import { BarretenbergApiSync } from "@aztec/bb.js/dest/browser/barretenberg_api";
+import { Buffer32, Fr } from "@aztec/bb.js/dest/browser/types";
 
 const DEMO_STRING =
   "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789";
@@ -39,32 +39,6 @@ function blake2FieldSync(api: BarretenbergApiSync) {
   return { result, expected };
 }
 
-// async function blake2sAsync(api: BarretenbergApiAsync) {
-//   const input = Buffer.from(DEMO_STRING);
-//   const expected = Buffer32.fromBuffer(
-//     new Uint8Array([
-//       0x44, 0xdd, 0xdb, 0x39, 0xbd, 0xb2, 0xaf, 0x80, 0xc1, 0x47, 0x89, 0x4c,
-//       0x1d, 0x75, 0x6a, 0xda, 0x3d, 0x1c, 0x2a, 0xc2, 0xb1, 0x00, 0x54, 0x1e,
-//       0x04, 0xfe, 0x87, 0xb4, 0xa5, 0x9e, 0x12, 0x43,
-//     ])
-//   );
-//   const result = await api.blake2s(input);
-//   return { result, expected };
-// }
-
-// async function blake2FieldAsync(api: BarretenbergApiAsync) {
-//   const input = Buffer.from(DEMO_STRING);
-//   const expected = Fr.fromBufferReduce(
-//     new Uint8Array([
-//       0x44, 0xdd, 0xdb, 0x39, 0xbd, 0xb2, 0xaf, 0x80, 0xc1, 0x47, 0x89, 0x4c,
-//       0x1d, 0x75, 0x6a, 0xda, 0x3d, 0x1c, 0x2a, 0xc2, 0xb1, 0x00, 0x54, 0x1e,
-//       0x04, 0xfe, 0x87, 0xb4, 0xa5, 0x9e, 0x12, 0x43,
-//     ])
-//   );
-//   const result = await api.blake2sToField(input);
-//   return { result, expected };
-// }
-
 export default function Home() {
   const [result, setResult] = useState<{
     result: Buffer32;
@@ -78,19 +52,11 @@ export default function Home() {
 
   useEffect(() => {
     (async function () {
-      // for sync:
       const bbWasm = await bbjs.BarretenbergWasm.new();
       const bbBinderSync = new BarretenbergBinderSync(bbWasm);
       const bbApi = new BarretenbergApiSync(bbBinderSync);
       setResult(blake2sSync(bbApi));
       setFieldResult(blake2FieldSync(bbApi));
-
-      // for async:
-      // const threads = 1;
-      // const { wasm, worker } = await bbjs.BarretenbergWasm.newWorker(threads);
-      // const bbApi = new BarretenbergApiAsync(worker, wasm);
-      // setResult(await blake2sAsync(bbApi));
-      // setFieldResult(await blake2FieldAsync(bbApi));
     })();
   }, []);
 
