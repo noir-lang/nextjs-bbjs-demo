@@ -51,6 +51,8 @@ async function blake2FieldAsync(api: BarretenbergApiAsync) {
 }
 
 export default function Home() {
+  const [title, setTitle] = useState<string>("single thread");
+
   const [result, setResult] = useState<{
     result: Buffer32;
     expected: Buffer32;
@@ -66,6 +68,7 @@ export default function Home() {
       const NUM_THREADS = 2;
       const worker = createWorker();
       const wasm = getRemoteBarretenbergWasm(worker);
+      // gets hanged here
       await wasm.init(
         NUM_THREADS,
         proxy(() => {})
@@ -84,17 +87,28 @@ export default function Home() {
     };
 
     (async function () {
-      // asyncRun();
-      syncRun();
+      if (title === "single thread") {
+        syncRun();
+      } else {
+        asyncRun();
+      }
     })();
-  }, []);
+  }, [title]);
 
   return (
     <main className={styles.main}>
       <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
+        <p
+          style={{ cursor: "pointer" }}
+          onClick={() => {
+            setTitle((prevTitle) =>
+              prevTitle === "single thread" ? "multithread" : "single thread"
+            );
+            setResult(undefined);
+            setFieldResult(undefined);
+          }}
+        >
+          {title}
         </p>
         <div>
           <a
@@ -121,6 +135,12 @@ export default function Home() {
             blake2s: {result.result.buffer}
             <br />
             expected: {result.expected.buffer}
+            <br />
+            match?:{" "}
+            {result.result.buffer.toString() ===
+            result.expected.buffer.toString()
+              ? "TRUE"
+              : "FALSE"}
           </div>
         ) : (
           "Loading..."
@@ -131,6 +151,11 @@ export default function Home() {
             blake2sToField: {fieldResult.result.toString()}
             <br />
             expected: {fieldResult.expected.toString()}
+            <br />
+            match?:{" "}
+            {fieldResult.expected.toString() === fieldResult.result.toString()
+              ? "TRUE"
+              : "FALSE"}
           </div>
         ) : (
           "Loading..."
