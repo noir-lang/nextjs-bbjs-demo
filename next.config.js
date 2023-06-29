@@ -4,6 +4,18 @@ const nextConfig = {
   experimental: {
     esmExternals: "loose",
   },
+  // test to check why netlify is failing:
+  webpack: (config, { dev, isServer }) => {
+    if (!dev) {
+      config.optimization.minimize = false;
+
+      if (!isServer) {
+        config.optimization.minimizer = [];
+      }
+    }
+
+    return config;
+  },
   // allows for local running of multithreads:
   async headers() {
     return [
