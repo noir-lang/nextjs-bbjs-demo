@@ -2,11 +2,6 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { proxy } from "comlink";
-import {
-  createWorker,
-  getRemoteBarretenbergWasm,
-} from "@aztec/bb.js/dest/browser/barretenberg_wasm/browser/index";
 
 import * as bbjs from "@aztec/bb.js/dest/browser";
 import { BarretenbergApiAsync } from "@aztec/bb.js/dest/browser/factory";
@@ -16,9 +11,14 @@ import { BarretenbergBinderSync } from "@aztec/bb.js/dest/browser/barretenberg_b
 
 import styles from "./page.module.css";
 
+const NUM_THREADS = 5;
+
 const DEMO_INPUT = Buffer.from(
   "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789"
 );
+
+const multithreadText = `multithread (${NUM_THREADS} threads)`;
+const singlethreadText = `single thread`;
 
 const TEST_BUFFER = new Uint8Array([
   0x44, 0xdd, 0xdb, 0x39, 0xbd, 0xb2, 0xaf, 0x80, 0xc1, 0x47, 0x89, 0x4c, 0x1d,
@@ -51,7 +51,7 @@ async function blake2FieldAsync(api: BarretenbergApiAsync) {
 }
 
 export default function Home() {
-  const [title, setTitle] = useState<string>("single thread");
+  const [title, setTitle] = useState<string>(multithreadText);
 
   const [result, setResult] = useState<{
     result: Buffer32;
@@ -65,13 +65,9 @@ export default function Home() {
 
   useEffect(() => {
     const asyncRun = async () => {
-      const NUM_THREADS = 2;
-      const worker = createWorker();
-      const wasm = getRemoteBarretenbergWasm(worker);
-      // gets hanged here
-      await wasm.init(
-        NUM_THREADS,
-        proxy(() => {})
+      console.log("running async");
+      const { wasm, worker } = await bbjs.BarretenbergWasm.newWorker(
+        NUM_THREADS
       );
       const api = new BarretenbergApiAsync(worker, wasm);
       setResult(await blake2sAsync(api));
@@ -79,6 +75,7 @@ export default function Home() {
     };
 
     const syncRun = async () => {
+      console.log("running sync");
       const bbWasm = await bbjs.BarretenbergWasm.new();
       const bbBinderSync = new BarretenbergBinderSync(bbWasm);
       const bbApi = new BarretenbergApiSync(bbBinderSync);
@@ -87,7 +84,7 @@ export default function Home() {
     };
 
     (async function () {
-      if (title === "single thread") {
+      if (title === singlethreadText) {
         syncRun();
       } else {
         asyncRun();
@@ -102,7 +99,9 @@ export default function Home() {
           style={{ cursor: "pointer" }}
           onClick={() => {
             setTitle((prevTitle) =>
-              prevTitle === "single thread" ? "multithread" : "single thread"
+              prevTitle === singlethreadText
+                ? multithreadText
+                : singlethreadText
             );
             setResult(undefined);
             setFieldResult(undefined);
