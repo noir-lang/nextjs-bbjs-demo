@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // permits loading of the worker file (barretenberg.js):
   experimental: {
     esmExternals: "loose",
   },
+  // allows for local running of multithreads:
   async headers() {
     return [
       {
