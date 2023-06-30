@@ -90,7 +90,7 @@ export function Recursion() {
         {proof && <span>proof [{proof.toString()?.slice(0, 50)}...]</span>}
         {vk && <span>vk [{vk?.toString().slice(0, 50)}...]</span>}
       </div>
-      <div style={{ display: "flex", flexDirection: "row" }}>
+      <div style={{ display: "flex", flexDirection: "row", width: "100%" }}>
         <div className={styles.grid}>made in valencia ❤️</div>
         <div>{processing ? <>{seconds}s</> : <>done in {seconds}s</>}</div>
       </div>
