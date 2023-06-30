@@ -9,7 +9,7 @@ import { gunzipSync } from "zlib";
 
 // Maximum we support.
 const MAX_CIRCUIT_SIZE = 2 ** 19;
-const RECURSION = false;
+const RECURSION = true;
 
 const CLOCK_EMOJIS = ["🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘", "🕙", "🕚"];
 
@@ -124,7 +124,7 @@ export async function getVk() {
 export async function getVerification(proof: Uint8Array, vk: Uint8Array) {
     const { api, acirComposer } = await initLite();
     try {
-        await api.acirLoadVerificationKey(acirComposer, Buffer.from(vk.buffer));
+        await api.acirLoadVerificationKey(acirComposer, new RawBuffer(vk));
         return await api.acirVerifyProof(acirComposer, proof, RECURSION);
     } finally {
         await api.destroy();

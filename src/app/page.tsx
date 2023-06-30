@@ -9,7 +9,6 @@ export default function Home() {
     <main className={styles.main}>
       {/* <Multithreading /> */}
       <Recursion />
-      <div className={styles.grid}>made in valencia ❤️</div>
     </main>
   );
 }
