@@ -5,6 +5,48 @@
   align-items: center;
   padding: 6rem;
   min-height: 100vh;
+  font-family: monospace;
+}
+
+.timer {
+  white-space: nowrap;
+}
+
+.button {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid black;
+  cursor: pointer;
+  font-family: monospace;
+  transition: transform 0.1s;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  cursor: progress;
+  transform: initial;
+  border: 2px solid #cacaca;
+}
+
+.footer {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
 }
 
 .description {
@@ -32,6 +74,25 @@
   background-color: rgba(var(--callout-rgb), 0.5);
   border: 1px solid rgba(var(--callout-border-rgb), 0.3);
   border-radius: var(--border-radius);
+}
+
+.recursionWrapper {
+  margin: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.toptext {
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: self-end;
+  text-align: center;
+  justify-content: center;
 }
 
 .code {

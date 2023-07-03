@@ -6,12 +6,37 @@ import {
 } from "@aztec/bb.js/dest/browser";
 import { main } from "./constants";
 import { gunzipSync } from "zlib";
+import { Ptr } from "@aztec/bb.js/dest/browser/types";
 
-// Maximum we support.
+
 const MAX_CIRCUIT_SIZE = 2 ** 19;
 const RECURSION = true;
 
 const CLOCK_EMOJIS = ["🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘", "🕙", "🕚"];
+
+export async function init(api: BarretenbergApiAsync, circuitSize: number) {
+    const subgroupSize = Math.pow(2, Math.ceil(Math.log2(circuitSize)));
+    if (subgroupSize > MAX_CIRCUIT_SIZE) {
+        throw new Error(`Circuit size of ${subgroupSize} exceeds max supported of ${MAX_CIRCUIT_SIZE}`);
+    }
+    console.log(`circuit size: ${circuitSize}`);
+    console.log(`subgroup size: ${subgroupSize}`);
+    console.log('loading crs...');
+    const crs = await Crs.new(subgroupSize + 1);
+    await api.commonInitSlabAllocator(subgroupSize);
+    await api.srsInitSrs(new RawBuffer(crs.getG1Data()), crs.numPoints, new RawBuffer(crs.getG2Data()));
+    const acirComposer = await api.acirNewAcirComposer(subgroupSize);
+    console.log('done.')
+    return { api, acirComposer, circuitSize: subgroupSize };
+}
+
+async function initLite() {
+    const api = await newBarretenbergApiAsync(1);
+    const crs = await Crs.new(1);
+    await api.srsInitSrs(new RawBuffer(crs.getG1Data()), crs.numPoints, new RawBuffer(crs.getG2Data()));
+    const acirComposer = await api.acirNewAcirComposer(0);
+    return { api, acirComposer };
+}
 
 export function getClock(index: number) {
     return CLOCK_EMOJIS[index % CLOCK_EMOJIS.length];
@@ -24,6 +49,7 @@ export function getBytecode() {
 }
 
 export async function computeCircuitSize(api: BarretenbergApiAsync) {
+    console.log(`computing circuit size...`);
     const bytecode = getBytecode();
     const [exact, total, subgroup] = await api.acirGetCircuitSizes(
         new RawBuffer(bytecode)
@@ -49,7 +75,6 @@ async function getWitness(witnessPath: string) {
     if (!response.ok) throw new Error("Network response was not ok");
     const data = new Uint8Array(await response.arrayBuffer());
     return concatenateTypedArrays(numToUInt32BE(data.length / 32), data);
-
 }
 
 export async function getGates(api: BarretenbergApiAsync) {
@@ -63,69 +88,48 @@ export async function getGates(api: BarretenbergApiAsync) {
     return total;
 }
 
-async function init() {
-    const api = await newBarretenbergApiAsync();
-
-    const circuitSize = await getGates(api);
-    const subgroupSize = Math.pow(2, Math.ceil(Math.log2(circuitSize)));
-    if (subgroupSize > MAX_CIRCUIT_SIZE) {
-        throw new Error(`Circuit size of ${subgroupSize} exceeds max supported of ${MAX_CIRCUIT_SIZE}`);
-    }
-    // Plus 1 needed! (Move +1 into Crs?)
-    const crs = await Crs.new(subgroupSize + 1);
-
-    // Important to init slab allocator as first thing, to ensure maximum memory efficiency.
-    await api.commonInitSlabAllocator(subgroupSize);
-
-    // Load CRS into wasm global CRS state.
-    // TODO: Make RawBuffer be default behaviour, and have a specific Vector type for when wanting length prefixed.
-    await api.srsInitSrs(new RawBuffer(crs.getG1Data()), crs.numPoints, new RawBuffer(crs.getG2Data()));
-
-    const acirComposer = await api.acirNewAcirComposer(subgroupSize);
-    return { api, acirComposer, circuitSize: subgroupSize };
+export async function getProof(api: BarretenbergApiAsync, acirComposer: Ptr) {
+    const bytecode = getBytecode();
+    console.log(`getting witness...`);
+    const witness = await getWitness('/witness.tr');
+    console.log(`creating proof...`);
+    const proof = await api.acirCreateProof(acirComposer, new RawBuffer(bytecode), new RawBuffer(witness), RECURSION);
+    console.log(`done.`);
+    console.log({ proof })
+    return proof;
 }
 
-async function initLite() {
-    const api = await newBarretenbergApiAsync(1);
-
-    // Plus 1 needed! (Move +1 into Crs?)
-    const crs = await Crs.new(1);
-
-    // Load CRS into wasm global CRS state.
-    await api.srsInitSrs(new RawBuffer(crs.getG1Data()), crs.numPoints, new RawBuffer(crs.getG2Data()));
-
-    const acirComposer = await api.acirNewAcirComposer(0);
-    return { api, acirComposer };
+export async function getVk(api: BarretenbergApiAsync, acirComposer: Ptr) {
+    const bytecode = getBytecode();
+    console.log('initing proving key...');
+    await api.acirInitProvingKey(acirComposer, new RawBuffer(bytecode));
+    console.log('initing verification key...');
+    const vk = await api.acirGetVerificationKey(acirComposer);
+    console.log('done.')
+    console.log({ vk })
+    return vk;
 }
 
-export async function getProof() {
-    const { api, acirComposer } = await init();
-    try {
-        const bytecode = getBytecode();
-        const witness = await getWitness('/witness.tr');
-        return await api.acirCreateProof(acirComposer, new RawBuffer(bytecode), new RawBuffer(witness), RECURSION);
-    } finally {
-        await api.destroy();
-    }
+export async function getVerification(api: BarretenbergApiAsync, acirComposer: Ptr, proof: Uint8Array, vk: Uint8Array) {
+    console.log('loading verification key...');
+    await api.acirLoadVerificationKey(acirComposer, new RawBuffer(vk));
+    console.log(`verifying...`);
+    const verification = await api.acirVerifyProof(acirComposer, proof, RECURSION);
+    console.log(`done.`)
+    console.log({ verification })
+    return verification;
 }
 
-export async function getVk() {
-    const { api, acirComposer } = await init();
-    try {
-        const bytecode = getBytecode();
-        await api.acirInitProvingKey(acirComposer, new RawBuffer(bytecode));
-        return await api.acirGetVerificationKey(acirComposer);
-    }
-    finally {
-        await api.destroy();
-    }
-}
-
-export async function getVerification(proof: Uint8Array, vk: Uint8Array) {
+export async function getLiteVerification(proof: Uint8Array, vk: Uint8Array) {
     const { api, acirComposer } = await initLite();
     try {
+        console.log('loading verification key...');
         await api.acirLoadVerificationKey(acirComposer, new RawBuffer(vk));
-        return await api.acirVerifyProof(acirComposer, proof, RECURSION);
+        console.log(`verifying...`);
+        const verification = await api.acirVerifyProof(acirComposer, proof, RECURSION);
+        console.log(`done.`)
+        console.log({ verification })
+        return verification;
     } finally {
         await api.destroy();
     }
