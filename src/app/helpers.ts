@@ -30,14 +30,6 @@ export async function init(api: BarretenbergApiAsync, circuitSize: number) {
     return { api, acirComposer, circuitSize: subgroupSize };
 }
 
-async function initLite() {
-    const api = await newBarretenbergApiAsync(1);
-    const crs = await Crs.new(1);
-    await api.srsInitSrs(new RawBuffer(crs.getG1Data()), crs.numPoints, new RawBuffer(crs.getG2Data()));
-    const acirComposer = await api.acirNewAcirComposer(0);
-    return { api, acirComposer };
-}
-
 export function getClock(index: number) {
     return CLOCK_EMOJIS[index % CLOCK_EMOJIS.length];
 }
@@ -99,38 +91,10 @@ export async function getProof(api: BarretenbergApiAsync, acirComposer: Ptr) {
     return proof;
 }
 
-export async function getVk(api: BarretenbergApiAsync, acirComposer: Ptr) {
-    const bytecode = getBytecode();
-    console.log('initing proving key...');
-    await api.acirInitProvingKey(acirComposer, new RawBuffer(bytecode));
-    console.log('initing verification key...');
-    const vk = await api.acirGetVerificationKey(acirComposer);
-    console.log('done.')
-    console.log({ vk })
-    return vk;
-}
-
-export async function getVerification(api: BarretenbergApiAsync, acirComposer: Ptr, proof: Uint8Array, vk: Uint8Array) {
-    console.log('loading verification key...');
-    await api.acirLoadVerificationKey(acirComposer, new RawBuffer(vk));
+export async function getVerification(api: BarretenbergApiAsync, acirComposer: Ptr, proof: Uint8Array) {
     console.log(`verifying...`);
     const verification = await api.acirVerifyProof(acirComposer, proof, RECURSION);
     console.log(`done.`)
     console.log({ verification })
     return verification;
-}
-
-export async function getLiteVerification(proof: Uint8Array, vk: Uint8Array) {
-    const { api, acirComposer } = await initLite();
-    try {
-        console.log('loading verification key...');
-        await api.acirLoadVerificationKey(acirComposer, new RawBuffer(vk));
-        console.log(`verifying...`);
-        const verification = await api.acirVerifyProof(acirComposer, proof, RECURSION);
-        console.log(`done.`)
-        console.log({ verification })
-        return verification;
-    } finally {
-        await api.destroy();
-    }
 }

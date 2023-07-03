@@ -1,16 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   BarretenbergApiAsync,
   newBarretenbergApiAsync,
 } from "@aztec/bb.js/dest/browser";
-import {
-  init,
-  getGates,
-  getVk,
-  getClock,
-  getVerification,
-  getProof,
-} from "./helpers";
+import { init, getGates, getClock, getVerification, getProof } from "./helpers";
 import styles from "./page.module.css";
 import { Ptr } from "@aztec/bb.js/dest/browser/types";
 
@@ -20,7 +13,6 @@ enum LoadingPhase {
   NONE,
   API,
   PROOF,
-  VK,
   VERIFICATION,
 }
 
@@ -38,7 +30,6 @@ export function Recursion() {
     InitalisedAPI | undefined
   >();
   const [proof, setProof] = useState<Uint8Array | undefined>(undefined);
-  const [vk, setVk] = useState<Uint8Array | undefined>(undefined);
   const [verification, setVerification] = useState<boolean | undefined>(
     undefined
   );
@@ -75,29 +66,15 @@ export function Recursion() {
     }
   }
 
-  async function loadVK() {
-    if (!initialisedAPI) return;
-    const timerRef = startTimer();
-    try {
-      setLoadingPhase(LoadingPhase.VK);
-      const vk = await getVk(initialisedAPI?.api, initialisedAPI?.acirComposer);
-      setVk(vk);
-    } finally {
-      setLoadingPhase(LoadingPhase.NONE);
-      stopTimer(timerRef);
-    }
-  }
-
   async function loadVerification() {
-    if (!initialisedAPI || !proof || !vk) return;
+    if (!initialisedAPI || !proof) return;
     const timerRef = startTimer();
     try {
       setLoadingPhase(LoadingPhase.VERIFICATION);
       const verification = await getVerification(
         initialisedAPI?.api,
         initialisedAPI?.acirComposer,
-        proof,
-        vk
+        proof
       );
       setVerification(verification);
     } finally {
@@ -142,27 +119,15 @@ export function Recursion() {
               type="button"
               className={styles.button}
               value={
-                loadingPhase === LoadingPhase.VK
-                  ? "getting vk..."
-                  : `get vk${vk ? " ✅" : ""}`
+                loadingPhase === LoadingPhase.PROOF
+                  ? "proving..."
+                  : `prove${proof ? " ✅" : ""}`
               }
-              onClick={loadVK}
+              onClick={loadProof}
               disabled={loadingPhase !== LoadingPhase.NONE}
             />
-            {vk && (
-              <input
-                type="button"
-                className={styles.button}
-                value={
-                  loadingPhase === LoadingPhase.PROOF
-                    ? "proving..."
-                    : `prove${proof ? " ✅" : ""}`
-                }
-                onClick={loadProof}
-                disabled={loadingPhase !== LoadingPhase.NONE}
-              />
-            )}
-            {proof && vk && (
+
+            {proof && (
               <input
                 type="button"
                 className={styles.button}
