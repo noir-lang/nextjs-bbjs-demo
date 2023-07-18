@@ -2,7 +2,6 @@ import {
     BarretenbergApiAsync,
     Crs,
     RawBuffer,
-    newBarretenbergApiAsync,
 } from "@aztec/bb.js/dest/browser";
 import { main } from "./constants";
 import { gunzipSync } from "zlib";
