@@ -13,6 +13,12 @@ const RECURSION = true;
 
 const CLOCK_EMOJIS = ["🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘", "🕙", "🕚"];
 
+export async function sleep(timeout: number) {
+    return new Promise((resolve: (_?: unknown) => void) => {
+        setTimeout(() => resolve(), timeout);
+    });
+}
+
 export async function init(api: BarretenbergApiAsync, circuitSize: number) {
     const subgroupSize = Math.pow(2, Math.ceil(Math.log2(circuitSize)));
     if (subgroupSize > MAX_CIRCUIT_SIZE) {
