@@ -1,9 +1,9 @@
-const puppeteer = require("puppeteer");
+const { chromium } = require("playwright");
 
 async function multithreadingTest() {
   try {
     console.log("Running Multithreading test...");
-    const browser = await puppeteer.launch({ headless: "new" });
+    const browser = await chromium.launch({ headless: false });
     const page = await browser.newPage();
     await page.goto("http://localhost:3000/multithreading");
     await page.waitForSelector(`[data-test-id='blake2s-success']`);
