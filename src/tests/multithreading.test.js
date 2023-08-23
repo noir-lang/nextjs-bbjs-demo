@@ -25,9 +25,9 @@ async function multithreadingTest() {
     await browser.close();
 
     console.log("Multithreading test succeeded");
-  } catch {
+  } catch (e) {
     console.error("An error occurred during the Multithreading test.");
-    throw new Error("Multithreading test failed");
+    throw new Error(e);
   }
 }
 

@@ -38,9 +38,9 @@ async function recursionTest() {
     await browser.close();
 
     console.log("Recursion test succeeded");
-  } catch {
+  } catch (e) {
     console.error("An error occurred during the Recursion test.");
-    throw new Error("Recursion test failed");
+    throw new Error(e);
   }
 }
 
