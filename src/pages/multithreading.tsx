@@ -8,8 +8,6 @@ import { Buffer32, Fr } from "@aztec/bb.js/dest/browser/types";
 import { BarretenbergApiSync } from "@aztec/bb.js/dest/browser/barretenberg_api";
 import { BarretenbergBinderSync } from "@aztec/bb.js/dest/browser/barretenberg_binder";
 
-import styles from "./page.module.css";
-
 const NUM_THREADS = 2;
 
 const DEMO_INPUT = Buffer.from(
@@ -49,7 +47,7 @@ async function blake2FieldAsync(api: BarretenbergApiAsync) {
   return { result, expected };
 }
 
-export function Multithreading() {
+export default function Multithreading() {
   const [title, setTitle] = useState<string>(multithreadText);
 
   const [result, setResult] = useState<{
@@ -95,7 +93,7 @@ export function Multithreading() {
 
   return (
     <>
-      <div className={styles.description}>
+      <div>
         <p
           style={{ cursor: "pointer" }}
           onClick={() => {
@@ -112,18 +110,19 @@ export function Multithreading() {
         </p>
       </div>
 
-      <div className={styles.center}>
+      <div>
         {result ? (
           <div>
             blake2s: {result.result.buffer}
             <br />
             expected: {result.expected.buffer}
             <br />
-            match?:{" "}
             {result.result.buffer.toString() ===
-            result.expected.buffer.toString()
-              ? "TRUE"
-              : "FALSE"}
+              result.expected.buffer.toString() &&
+              Boolean(result.result.buffer) &&
+              Boolean(result.expected.buffer) && (
+                <div data-test-id="blake2s-success">blake2s Success</div>
+              )}
           </div>
         ) : (
           "Loading..."
@@ -135,10 +134,14 @@ export function Multithreading() {
             <br />
             expected: {fieldResult.expected.toString()}
             <br />
-            match?:{" "}
-            {fieldResult.expected.toString() === fieldResult.result.toString()
-              ? "TRUE"
-              : "FALSE"}
+            {fieldResult.expected.toString() ===
+              fieldResult.result.toString() &&
+              Boolean(fieldResult.result) &&
+              Boolean(fieldResult.expected) && (
+                <div data-test-id="blake2sToField-success">
+                  blake2sToField Success
+                </div>
+              )}
           </div>
         ) : (
           "Loading..."

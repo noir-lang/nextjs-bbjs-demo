@@ -3,8 +3,13 @@ import {
   BarretenbergApiAsync,
   newBarretenbergApiAsync,
 } from "@aztec/bb.js/dest/browser";
-import { init, getGates, getClock, getVerification, getProof } from "./helpers";
-import styles from "./page.module.css";
+import {
+  init,
+  getGates,
+  getClock,
+  getVerification,
+  getProof,
+} from "../app/helpers";
 import { Ptr } from "@aztec/bb.js/dest/browser/types";
 
 const NUM_THREADS = 5;
@@ -22,7 +27,7 @@ interface InitalisedAPI {
   circuitSize: number;
 }
 
-export function Recursion() {
+export default function Recursion() {
   const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>(
     LoadingPhase.NONE
   );
@@ -97,12 +102,11 @@ export function Recursion() {
 
   return (
     <>
-      <div className={styles.recursionWrapper}>
+      <div>
         {!initialisedAPI && (
-          <span className={styles.toptext}>
+          <span>
             <input
               type="button"
-              className={styles.button}
               value={
                 loadingPhase !== LoadingPhase.NONE
                   ? "initalising..."
@@ -114,14 +118,13 @@ export function Recursion() {
           </span>
         )}
         {initialisedAPI && (
-          <div className={styles.actions}>
+          <div>
             <input
               type="button"
-              className={styles.button}
               value={
                 loadingPhase === LoadingPhase.PROOF
                   ? "proving..."
-                  : `prove${proof ? " ✅" : ""}`
+                  : `${proof ? "proved" : "proving failed"}`
               }
               onClick={loadProof}
               disabled={loadingPhase !== LoadingPhase.NONE}
@@ -130,15 +133,14 @@ export function Recursion() {
             {proof && (
               <input
                 type="button"
-                className={styles.button}
                 value={
                   loadingPhase === LoadingPhase.VERIFICATION
                     ? "verifying..."
-                    : `verify${
+                    : `${
                         verification
-                          ? " ✅"
+                          ? "verified"
                           : verification === false
-                          ? " ❌"
+                          ? "verification failed"
                           : ""
                       }`
                 }
@@ -149,9 +151,8 @@ export function Recursion() {
           </div>
         )}
       </div>
-      <div className={styles.footer}>
-        <div className={styles.grid}>made in valencia ❤️</div>
-        <div className={styles.timer}>
+      <div>
+        <div>
           total: {formatTime(seconds)}s {`//`} partial:{" "}
           {formatTime(partialSeconds)}s {`//`} {getClock(seconds)}
         </div>
