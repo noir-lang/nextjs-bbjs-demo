@@ -5,7 +5,7 @@ async function multithreadingTest() {
     console.log("Running Multithreading test...");
 
     console.log("Launching chromium browser...");
-    const browser = await chromium.launch({ headless: false });
+    const browser = await chromium.launch({ headless: true });
 
     console.log("Opening a new page...");
     const page = await browser.newPage();
